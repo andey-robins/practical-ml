@@ -3,8 +3,6 @@ import psb2
 
 from tqdm import tqdm
 
-from sklearn.metrics import accuracy_score
-
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
@@ -31,6 +29,7 @@ def extract_features(example: Dict) -> Dict:
     features = {
         'input_count': sum('input' in k for k in example),
         'input_type': type(example['input1']),
+        'output_count': sum('output' in k for k in example),
         'output_type': type(example['output1']),
         'input_length': 1 if (type(example['input1']) == type(1.2) or type(example['input1']) == type(1)) else len(example['input1'])
     }
@@ -38,7 +37,9 @@ def extract_features(example: Dict) -> Dict:
 
 
 def one_hot_encode(features: Dict) -> List:
-    feature_list = [features['input_count'], features['input_length']]
+    feature_list = [features['input_count'],
+                    features['input_length'],
+                    features['output_count']]
     # int string list float bool
     for feature in ['input_type', 'output_type']:
         types = [1, 'a', [1, 2], 1.2, False]
@@ -58,7 +59,7 @@ def get_models(X: List, y: List) -> Dict:
     models['dt'] = DecisionTreeClassifier().fit(X, y)
     models['knn'] = KNeighborsClassifier().fit(X, y)
     models['svm'] = SVC().fit(X, y)
-    models['log'] = LogisticRegression(max_iter=500).fit(X, y)
+    models['log'] = LogisticRegression().fit(X, y)
     return models
 
 
