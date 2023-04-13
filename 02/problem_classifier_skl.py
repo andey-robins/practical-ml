@@ -8,6 +8,12 @@ from tqdm import tqdm
 
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import accuracy_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
 
 import autosklearn.classification as askc
 
@@ -25,7 +31,7 @@ def get_dataset(size=500_000) -> Tuple:
         # we don't load in anything split between test and train because
         # we plan on nesting stratified K fold validation in main
         (train_data, _test_data) = psb2.fetch_examples(
-            "../data", problem, size, 0)
+            "../data", problem, size, 0, seed=1)
         X.extend(train_data)
         y.extend([problem for i in range(size)])
 
@@ -60,6 +66,17 @@ def one_hot_encode(features: Dict) -> List:
                 feature_list.append(0)
 
     return feature_list
+
+
+def get_models(X: List, y: List) -> Dict:
+    models = {}
+    models['gbc'] = GradientBoostingClassifier().fit(X, y)
+    models['rf'] = RandomForestClassifier().fit(X, y)
+    models['dt'] = DecisionTreeClassifier().fit(X, y)
+    models['knn'] = KNeighborsClassifier().fit(X, y)
+    models['svm'] = SVC().fit(X, y)
+    models['log'] = LogisticRegression().fit(X, y)
+    return models
 
 
 def main():
@@ -106,11 +123,18 @@ def main():
             automl.fit(X_train, y_train)
             prediction = automl.predict(X_test)
             acc = accuracy_score(prediction, y_test)
+            models = get_models(X_train, y_train)
+
+            scores = {}
+            print('Scoring models')
+            for name in tqdm(models.keys()):
+                scores[name] = models[name].score(X_test, y_test)
             with open(f'results_{iteration}.out', "w+") as f:
                 f.write(automl.sprint_statistics())
                 f.write("\n\n")
                 f.write(str(automl.show_models()))
                 f.write(f'accuracy: {acc}')
+                f.write(f'scores: {scores}')
             print(automl.sprint_statistics())
             accuracy[iteration] = acc
             iteration += 1
