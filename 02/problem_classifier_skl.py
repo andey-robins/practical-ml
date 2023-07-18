@@ -109,15 +109,15 @@ def main():
 
             print('Beginning model training')
             automl = askc.AutoSklearnClassifier(
-                include = {
+                include={
                     'classifier': ["random_forest", "gradient_boosting", "k_nearest_neighbors", "adaboost", "libsvm_svc", "decision_tree"],
                     'feature_preprocessor': ["no_preprocessing"]
                 },
-                time_left_for_this_task = 1 * HOUR,
-                per_run_time_limit = 20 * MINUTE,
-                seed = iteration,
-                n_jobs = 5,
-                memory_limit = 12 * GB,
+                time_left_for_this_task=1 * HOUR,
+                per_run_time_limit=20 * MINUTE,
+                seed=iteration,
+                n_jobs=5,
+                memory_limit=12 * GB,
             )
 
             automl.fit(X_train, y_train)
@@ -136,6 +136,13 @@ def main():
                 f.write(f'accuracy: {acc}')
                 f.write(f'scores: {scores}')
             print(automl.sprint_statistics())
+            models = get_models(X_train, y_train)
+
+            scores = {}
+            print('Scoring models')
+            for name in tqdm(models.keys()):
+                scores[name] = models[name].score(X_test, y_test)
+
             accuracy[iteration] = acc
             iteration += 1
 
